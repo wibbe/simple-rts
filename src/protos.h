@@ -6,13 +6,13 @@ extern void setvar(const char *name, int i);
 extern int getvar(const char *name);
 extern bool identexists(const char *name);
 extern bool addcommand(const char *name, void (*fun)(), int narg);
-extern int execute(char *p, bool down = true);
+extern int execute(const char * p, bool down = true);
 extern void exec(const char *cfgfile);
 extern bool execfile(const char *cfgfile);
 extern void resetcomplete();
 extern void complete(char * s);
-extern void alias(const char * name, char *action);
-extern char *getalias(const char * name);
+extern void alias(const char * name, const char * action);
+extern char * getalias(const char * name);
 extern void writecfg();
 
 // platform

@@ -16,7 +16,7 @@ pool::pool()
 
 void *pool::alloc(size_t size)
 {
-    if(size>MAXREUSESIZE)
+    if(size > MAXREUSESIZE)
     {
         return malloc(size);
     }
@@ -32,8 +32,8 @@ void *pool::alloc(size_t size)
         else
         {
             size <<= PTRBITS;
-            if(left<size) allocnext(POOLSIZE);
-            char *r = p;
+            if (left<size) allocnext(POOLSIZE);
+            char * r = p;
             p += size;
             left -= size;
             return r;
@@ -85,9 +85,9 @@ void pool::allocnext(size_t allocsize)
     left = allocsize;
 };
 
-char *pool::string(const char *s, size_t l)
+char *pool::string(const char * s, size_t l)
 {
-    char *b = (char *)alloc(l+1);
+    char * b = (char *)alloc(l + 1);
     strncpy(b,s,l);
     b[l] = 0;
     return b;  
@@ -102,13 +102,13 @@ pool * gp()  // useful for global buffers that need to be initialisation order i
 
 ///////////////////////// misc tools ///////////////////////
 
-char *path(char *s)
+char * path(char *s)
 {
-    for(char *t = s; (t = strpbrk(t, "/\\")); *t++ = PATHDIV);
+    for (char *t = s; (t = strpbrk(t, "/\\")); *t++ = PATHDIV);
     return s;
 };
 
-char *loadfile(char *fn, int *size)
+char * loadfile(char * fn, int *size)
 {
     FILE *f = fopen(resourcepath(fn), "rb");
     if(!f) return NULL;

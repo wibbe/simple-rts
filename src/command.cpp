@@ -68,20 +68,20 @@ bool addcommand(const char *name, void (*fun)(), int narg)
     return false;
 };
 
-char *parseexp(char *&p, int right)             // parse any nested set of () or []
+char * parseexp(char * &p, int right)             // parse any nested set of () or []
 {
     int left = *p++;
-    char *word = p;
-    for(int brak = 1; brak; )
+    const char * word = p;
+    for (int brak = 1; brak; )
     {
         int c = *p++;
-        if(c=='\r') *(p-1) = ' ';               // hack
-        if(c==left) brak++;
-        else if(c==right) brak--;
-        else if(!c) { p--; conoutf("missing \"%c\"", right); return NULL; };
+        if (c == '\r') *(p-1) = ' ';               // hack
+        if (c == left) brak++;
+        else if (c == right) brak--;
+        else if (!c) { p--; conoutf("missing \"%c\"", right); return NULL; };
     };
     char *s = newstring(word, p-word-1);
-    if(left=='(')
+    if (left == '(')
     {
         string t;
         itoa(t, execute(s));                    // evaluate () exps directly, and substitute result
@@ -90,28 +90,29 @@ char *parseexp(char *&p, int right)             // parse any nested set of () or
     return s;
 };
 
-char *parseword(char *&p)                       // parse single argument, including expressions
+char * parseword(char * &p)                       // parse single argument, including expressions
 {
     p += strspn(p, " \t\r");
-    if(p[0]=='/' && p[1]=='/') p += strcspn(p, "\n\0");
-    if(*p=='\"')
+    if (p[0] == '/' && p[1] == '/')
+        p += strcspn(p, "\n\0");
+    if (*p=='\"')
     {
         p++;
-        char *word = p;
+        const char * word = p;
         p += strcspn(p, "\"\r\n\0");
-        char *s = newstring(word, p-word);
-        if(*p=='\"') p++;
+        char * s = newstring(word, p - word);
+        if (*p == '\"') p++;
         return s;
     };
-    if(*p=='(') return parseexp(p, ')');
-    if(*p=='[') return parseexp(p, ']');
+    if (*p == '(') return parseexp(p, ')');
+    if (*p == '[') return parseexp(p, ']');
     char *word = p;
     p += strcspn(p, "; \t\r\n\0");
-    if(p-word==0) return NULL;
+    if (p-word==0) return NULL;
     return newstring(word, p-word);
 };
 
-char *lookup(char *n)                           // find value of ident referenced with $ in exp
+char * lookup(char *n)                           // find value of ident referenced with $ in exp
 {
     ident *id = idents->access(n+1);
     if(id) switch(id->type)
@@ -123,21 +124,23 @@ char *lookup(char *n)                           // find value of ident reference
     return n;
 };
 
-int execute(char *p, bool isdown)               // all evaluation happens here, recursively
+int execute(const char * str, bool isdown)               // all evaluation happens here, recursively
 {
+    char * p = newstring(str);
+
     const int MAXWORDS = 25;                    // limit, remove
-    char *w[MAXWORDS];
+    char * w[MAXWORDS];
     int val = 0;
     for(bool cont = true; cont;)                // for each ; seperated statement
     {
         int numargs = MAXWORDS;
         loopi(MAXWORDS)                         // collect all argument values
         {
-            w[i] = "";
+            w[i] = NULL;
             if(i>numargs) continue;
             char *s = parseword(p);             // parse and evaluate exps
-            if(!s) { numargs = i; s = ""; };
-            if(*s=='$') s = lookup(s);          // substitute variables
+            if (!s) { numargs = i; s = NULL; };
+            if (*s == '$') s = lookup(s);          // substitute variables
             w[i] = s;
         };
 
@@ -227,6 +230,8 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
         };
         loopj(numargs) gp()->deallocstr(w[j]);
     };
+
+    gp()->deallocstr(p);
     return val;
 };
 
@@ -263,7 +268,7 @@ bool execfile(const char * cfgfile)
 {
     string s;
     strcpy_s(s, cfgfile);
-    char *buf = loadfile(path(s), NULL);
+    char * buf = loadfile(path(s), NULL);
     if(!buf) return false;
     execute(buf);
     free(buf);
@@ -305,20 +310,20 @@ COMMAND(writecfg, ARG_NONE);
 // below the commands that implement a small imperative language. thanks to the semantics of
 // () and [] expressions, any control construct can be defined trivially.
 
-void intset(char *name, int v) { string b; itoa(b, v); alias(name, b); };
+void intset(const char * name, int v) { string b; itoa(b, v); alias(name, b); }
 
-void ifthen(char *cond, char *thenp, char *elsep) { execute(cond[0]!='0' ? thenp : elsep); };
-void loopa(char *times, char *body) { int t = atoi(times); loopi(t) { intset("i", i); execute(body); }; };
-void whilea(char *cond, char *body) { while(execute(cond)) execute(body); };    // can't get any simpler than this :)
-void onrelease(bool on, char *body) { if(!on) execute(body); };
+void ifthen(const char * cond, const char * thenp, const char * elsep) { execute(cond[0] != '0' ? thenp : elsep); }
+void loopa(const char * times, const char * body) { int t = atoi(times); loopi(t) { intset("i", i); execute(body); }; }
+void whilea(const char * cond, const char * body) { while (execute(cond)) execute(body); }    // can't get any simpler than this :)
+void onrelease(bool on, const char * body) { if (!on) execute(body); }
 
-void concat(char *s) { alias("s", s); };
+void concat(char * s) { alias("s", s); }
 
-void concatword(char *s)
+void concatword(char * s)
 {
-    for(char *a = s, *b = s; *a = *b; b++) if(*a!=' ') a++;
+    for (char * a = s, * b = s; (*a = *b); b++) if (*a != ' ') a++;
     concat(s);
-};
+}
 
 int listlen(char *a)
 {
@@ -326,7 +331,7 @@ int listlen(char *a)
     int n = 0;
     while(*a) if(*a++==' ') n++;
     return n+1;
-};
+}
 
 void at(char *s, char *pos)
 {
@@ -334,7 +339,7 @@ void at(char *s, char *pos)
     loopi(n) s += strspn(s += strcspn(s, " \0"), " ");
     s[strcspn(s, " \0")] = 0;
     concat(s);
-};
+}
 
 COMMANDN(loop, loopa, ARG_2STR);
 COMMANDN(while, whilea, ARG_2STR);

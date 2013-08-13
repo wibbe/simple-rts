@@ -110,8 +110,8 @@ inline int fast_f2nat(float a) {        // only for positive floats
 
 
 
-extern char *path(char *s);
-extern char *loadfile(char *fn, int *size);
+extern char * path(char *s);
+extern char * loadfile(char *fn, int *size);
 extern void endianswap(void *, int, int);
 
 // memory pool that uses buckets and linear allocation for small objects
@@ -123,13 +123,13 @@ struct pool
     enum { PTRSIZE = sizeof(char *) };
     enum { MAXBUCKETS = 65 };   // meaning up to size 256 on 32bit pointer systems
     enum { MAXREUSESIZE = MAXBUCKETS*PTRSIZE-PTRSIZE };
-    inline size_t bucket(size_t s) { return (s+PTRSIZE-1)>>PTRBITS; };
+    inline size_t bucket(size_t s) { return (s + PTRSIZE - 1) >> PTRBITS; };
     enum { PTRBITS = PTRSIZE==2 ? 1 : PTRSIZE==4 ? 2 : 3 };
 
     char *p;
     size_t left;
-    char *blocks;
-    void *reuse[MAXBUCKETS];
+    char * blocks;
+    void * reuse[MAXBUCKETS];
 
     pool();
     ~pool() { dealloc_block(blocks); };
@@ -138,8 +138,8 @@ struct pool
     void dealloc(void *p, size_t size);
     void *realloc(void *p, size_t oldsize, size_t newsize);
 
-    char *string(const char *s, size_t l);
-    char *string(const char *s) { return string(s, strlen(s)); };
+    char * string(const char *s, size_t l);
+    char * string(const char *s) { return string(s, strlen(s)); };
     void deallocstr(char *s) { dealloc(s, strlen(s)+1); }; 
     char *stringbuf(const char *s) { return string(s, _MAXDEFSTR-1); }; 
 
@@ -274,9 +274,9 @@ template <class T> struct hashtable
 
 #define enumerate(ht,t,e,b) loopi(ht->size) for(ht->enumc = ht->table[i]; ht->enumc; ht->enumc = ht->enumc->next) { t e = &ht->enumc->data; b; }
 
-inline char *newstring(const char *s)        { return gp()->string(s);    };
-inline char *newstring(const char *s, size_t l) { return gp()->string(s, l); };
-inline char *newstringbuf(const char *s)     { return gp()->stringbuf(s); };
+inline char * newstring(const char * s)        { return gp()->string(s);    };
+inline char * newstring(const char * s, size_t l) { return gp()->string(s, l); };
+inline char * newstringbuf(const char *s)     { return gp()->stringbuf(s); };
 
 #endif
 

@@ -16,7 +16,7 @@ void cleanup(const char * msg)         // single program exit point;
     SDL_ShowCursor(1);
     if(msg)
     {
-        messagebox("Cube RTS fatal error", msg);
+        messagebox("Simple RTS fatal error", msg);
     };
 
     SDL_GL_DeleteContext(glContext);
