@@ -325,15 +325,15 @@ void concatword(char * s)
     concat(s);
 }
 
-int listlen(char *a)
+int listlen(const char * a)
 {
-    if(!*a) return 0;
+    if (!*a) return 0;
     int n = 0;
-    while(*a) if(*a++==' ') n++;
-    return n+1;
+    while (*a) if (*a++ == ' ') n++;
+    return n + 1;
 }
 
-void at(char *s, char *pos)
+void at(char * s, char * pos)
 {
     int n = atoi(pos);
     loopi(n) s += strspn(s += strcspn(s, " \0"), " ");

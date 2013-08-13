@@ -29,10 +29,10 @@ extern void writebinds(FILE *f);
 // menus
 extern bool rendermenu();
 extern void menuset(int menu);
-extern void menumanual(int m, int n, char *text);
+extern void menumanual(int m, int n, const char * text);
 extern void sortmenu(int start, int num);
 extern bool menukey(int code, bool isdown);
-extern void newmenu(char *name);
+extern void newmenu(const char * name);
 
 // serverbrowser
 extern void addserver(char *servername);
@@ -97,7 +97,7 @@ extern void fixplayer1range();
 
 // clientextras
 extern void renderclients();
-extern void renderclient(dynent *d, bool team, char *mdlname, bool hellpig, float scale);
+extern void renderclient(dynent * d, bool team, const char * mdlname, bool hellpig, float scale);
 void showscores(bool on);
 extern void renderscores();
 
@@ -133,9 +133,9 @@ extern void *alloc(int s);
 extern void keyrepeat(bool on);
 
 // rendertext
-extern void draw_text(char *str, int left, int top, int gl_num);
-extern void draw_textf(char *fstr, int left, int top, int gl_num, ...);
-extern int text_width(char *str);
+extern void draw_text(const char * str, int left, int top, int gl_num);
+extern void draw_textf(const char * fstr, int left, int top, int gl_num, ...);
+extern int text_width(const char * str);
 extern void draw_envbox(int t, int fogdist);
 
 // editing

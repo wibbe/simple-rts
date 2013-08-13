@@ -100,7 +100,7 @@ short char_coords[96][4] =
     {310,448,363,512},  //~
 };
 
-int text_width(char *str)
+int text_width(const char * str)
 {
     int x = 0;
     for (int i = 0; str[i] != 0; i++)
@@ -118,13 +118,13 @@ int text_width(char *str)
 }
 
 
-void draw_textf(char *fstr, int left, int top, int gl_num, ...)
+void draw_textf(const char * fstr, int left, int top, int gl_num, ...)
 {
     sprintf_sdlv(str, gl_num, fstr);
     draw_text(str, left, top, gl_num);
 };
 
-void draw_text(char *str, int left, int top, int gl_num)
+void draw_text(const char * str, int left, int top, int gl_num)
 {
     glBlendFunc(GL_ONE, GL_ONE);
     glBindTexture(GL_TEXTURE_2D, gl_num);

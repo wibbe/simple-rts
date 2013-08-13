@@ -30,20 +30,20 @@ void quit()                     // normal exit
 {
     writeservercfg();
     cleanup(NULL);
-};
+}
 
 void fatal(const char * s, const char * o)    // failure exit
 {
     sprintf_sd(msg)("%s%s (%s)\n", s, o, SDL_GetError());
     cleanup(msg);
-};
+}
 
 void *alloc(int s)              // for some big chunks... most other allocs use the memory pool
 {
     void *b = calloc(1,s);
     if(!b) fatal("out of memory!");
     return b;
-};
+}
 
 int scr_w = 1024;
 int scr_h = 640;
@@ -53,33 +53,29 @@ void screenshot()
     SDL_Surface *image;
     SDL_Surface *temp;
     int idx;
-    if(image = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0))
+    if ((image = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0)))
     {
-        if(temp  = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0))
+        if ((temp  = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0)))
         {
             glReadPixels(0, 0, scr_w, scr_h, GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
-            for (idx = 0; idx<scr_h; idx++)
+            for (idx = 0; idx < scr_h; idx++)
             {
-                char *dest = (char *)temp->pixels+3*scr_w*idx;
-                memcpy(dest, (char *)image->pixels+3*scr_w*(scr_h-1-idx), 3*scr_w);
+                char *dest = (char *)temp->pixels + 3 * scr_w * idx;
+                memcpy(dest, (char *)image->pixels + 3 * scr_w * (scr_h - 1 - idx), 3 * scr_w);
                 endianswap(dest, 3, scr_w);
-            };
+            }
+
             sprintf_sd(buf)("screenshots/screenshot_%d.bmp", lastmillis);
             SDL_SaveBMP(temp, path(buf));
             SDL_FreeSurface(temp);
-        };
+        }
+
         SDL_FreeSurface(image);
-    };
-};
+    }
+}
 
 COMMAND(screenshot, ARG_NONE);
 COMMAND(quit, ARG_NONE);
-
-void keyrepeat(bool on)
-{
-    SDL_EnableKeyRepeat(on ? SDL_DEFAULT_REPEAT_DELAY : 0,
-                             SDL_DEFAULT_REPEAT_INTERVAL);
-};
 
 VARF(gamespeed, 10, 100, 1000, if(multiplayer()) gamespeed = 100);
 VARP(minmillis, 0, 5, 1000);
@@ -95,7 +91,7 @@ int main(int argc, char **argv)
     bool dedicated = false;
     //int fs = SDL_FULLSCREEN, par = 0, uprate = 0, maxcl = 4;
     int fs = 0, par = 0, uprate = 0, maxcl = 4;
-    char *sdesc = "", *ip = "", *master = NULL, *passwd = "";
+    char * sdesc = NULL, * ip = NULL, * master = NULL, * passwd = NULL;
     islittleendian = *((char *)&islittleendian);
 
     #define log(s) conoutf("init: %s", s)
@@ -156,9 +152,8 @@ int main(int argc, char **argv)
     glContext = SDL_GL_CreateContext(mainWindow);
 
     log("video: misc");
-    SDL_WM_SetCaption("Cube RTS", NULL);
-    SDL_WM_GrabInput(SDL_GRAB_ON);
-    keyrepeat(false);
+    //SDL_WM_SetCaption("Cube RTS", NULL);
+    //SDL_WM_GrabInput(SDL_GRAB_ON);
     SDL_ShowCursor(0);
 
     log("gl");

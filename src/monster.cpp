@@ -17,11 +17,9 @@ struct monstertype      // see docs for how these values modify behaviour
 {
     short gun, speed, health, freq, lag, rate, pain, loyalty, mscale, bscale;
     short painsound, diesound;
-    char *name, *mdlname;
-}
-
-monstertypes[NUMMONSTERTYPES] =
-{
+    const char * name;
+    const char * mdlname;
+} monstertypes[NUMMONSTERTYPES] = {
     { GUN_FIREBALL,  15, 100, 3, 0,   100, 800, 1, 10, 10, S_PAINO, S_DIE1,   "an ogre",     "monster/ogro"    },
     { GUN_CG,        18,  70, 2, 70,   10, 400, 2,  8,  9, S_PAINR, S_DEATHR, "a rhino",     "monster/rhino"   },
     { GUN_SG,        14, 120, 1, 100, 300, 400, 4, 14, 14, S_PAINE, S_DEATHE, "ratamahatta", "monster/rat"     },

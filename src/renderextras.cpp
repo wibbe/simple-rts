@@ -107,7 +107,7 @@ void renderspheres(int time)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     glBindTexture(GL_TEXTURE_2D, 4);
 
-    for(sphere *p, **pp = &slist; p = *pp;)
+    for (sphere *p, **pp = &slist; (p = *pp);)
     {
         glPushMatrix();
         float size = p->size/p->max;
@@ -172,7 +172,7 @@ void loadsky(char *basename)
 {
     static string lastsky = "";
     if(strcmp(lastsky, basename)==0) return;
-    char *side[] = { "ft", "bk", "lf", "rt", "dn", "up" };
+    const char * side[] = { "ft", "bk", "lf", "rt", "dn", "up" };
     int texnum = 14;
     loopi(6)
     {
@@ -214,7 +214,7 @@ void readdepth(int w, int h)
 {
     glReadPixels(w, h, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &cursordepth);
     double worldx = 0, worldy = 0, worldz = 0;
-    gluUnProject(w, h, depthcorrect(cursordepth), mm, pm, viewport, &worldx, &worldz, &worldy);
+    //gluUnProject(w, h, depthcorrect(cursordepth), mm, pm, viewport, &worldx, &worldz, &worldy);
     worldpos.x = (float)worldx;
     worldpos.y = (float)worldy;
     worldpos.z = (float)worldz;
