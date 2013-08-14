@@ -1,6 +1,6 @@
 
 cmake_minimum_required(VERSION 2.6)
-project(CUBE_RTS)
+project(SimpleRTS)
 
 # Find SDL and other libraries
 set(LIBS_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}/libs/local CACHE STRING "Path to SDL 2.0.0" FORCE)
@@ -18,6 +18,7 @@ find_library(SDLMAIN_LIBRARY
              NO_DEFAULT_PATH REQUIRED)
 
 find_package(OpenGL REQUIRED)
+find_package(Threads REQUIRED)
 
 set(EXTRA_LIBS "z")
 
@@ -34,41 +35,13 @@ if (UNIX)
 endif()
 
 include_directories(${LIBS_FOLDER}/include
+                    ${CMAKE_CURRENT_SOURCE_DIR}/src
                     ${CMAKE_CURRENT_SOURCE_DIR}/src/enet/include)
 
 set(SOURCE
-  src/client.cpp
-  src/clientextras.cpp
-  src/clientgame.cpp
-  src/clients2c.cpp
-  src/command.cpp
-  src/console.cpp
-  src/editing.cpp
-  src/entities.cpp
   src/main.cpp
-  src/menus.cpp
-  src/monster.cpp
-  src/physics.cpp
-  src/rendercubes.cpp
-  src/renderextras.cpp
-  src/rendergl.cpp
-  src/rendermd2.cpp
-  src/renderparticles.cpp
-  src/rendertext.cpp
-  src/rndmap.cpp
-  src/savegamedemo.cpp
-  src/server.cpp
-  src/serverbrowser.cpp
-  src/serverms.cpp
-  src/serverutil.cpp
-  src/sound.cpp
-  src/tools.cpp
-  src/weapon.cpp
-  src/world.cpp
-  src/worldio.cpp
-  src/worldlight.cpp
-  src/worldocull.cpp
-  src/worldrender.cpp
+  src/gfx.cpp
+  src/glew.c
 
   src/enet/callbacks.c
   src/enet/host.c
@@ -82,21 +55,22 @@ set(SOURCE
 # Platform specific source
 if (UNIX)
   if (APPLE)
-    set(SOURCE ${SOURCE} src/mac.mm src/enet/unix.c)
+    set(SOURCE ${SOURCE} src/enet/unix.c)
   else()
-    set(SOURCE ${SOURCE} src/unix.cpp src/enet/unix.c)
+    set(SOURCE ${SOURCE} src/enet/unix.c)
   endif()
 else()
-  set(SOURCE ${SOURCE} src/win32.cpp src/enet/win32.c)
+  set(SOURCE ${SOURCE} src/enet/win32.c)
 endif()
 
 # Build and link app
-add_executable(CubeRTS
+add_executable(SimpleRTS
                WIN32 MACOSX_BUNDLE
                ${SOURCE})
 
-target_link_libraries(CubeRTS
+target_link_libraries(SimpleRTS
                       ${OPENGL_LIBRARIES}
+                      ${CMAKE_THREAD_LIBS_INIT}
                       ${SDL_LIBRARY}
                       ${SDLMAIN_LIBRARY}
                       ${EXTRA_LIBS})
@@ -111,6 +85,6 @@ target_link_libraries(CubeRTS
 #
 if(APPLE)
   set(BUNDLE_BINARY ${CMAKE_CURRENT_BINARY_DIR}/CubeRTS.app/Contents/Resources)
-  add_custom_command(TARGET CubeRTS POST_BUILD
+  add_custom_command(TARGET SimpleRTS POST_BUILD
                      COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/scripts/copy-data-to-bundle.sh ${BUNDLE_BINARY} ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
