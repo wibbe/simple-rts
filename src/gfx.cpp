@@ -314,7 +314,7 @@ namespace gfx
   }
 
   // -- Resource loading --
-#if 0
+
   Texture * loadTexture(const char * filename)
   {
     std::map<std::string, Texture *>::iterator result = _impl->textures.find(filename);
@@ -323,15 +323,13 @@ namespace gfx
 
     CHECK_GL_ERROR();
 
-    std::string path = resourcePath(filename);
-
     unsigned char * image = 0;
     int width, height, channels;
 
-    FILE * file = fopen(path.c_str(), "rb");
+    FILE * file = fopen(filename, "rb");
     if (!file)
     {
-      console::error("Could not open file '%s'", path.c_str());
+      fprintf(stderr, "Could not open file '%s'", filename);
       return 0;
     }
 
@@ -340,7 +338,7 @@ namespace gfx
 
     if (!image)
     {
-      console::error("Failed to load texture '%s'", filename);
+      fprintf(stderr, "Failed to load texture '%s'", filename);
       return 0;
     }
 
@@ -361,6 +359,7 @@ namespace gfx
     return tex;
   }
 
+#if 0
   Font * RendererGL32::loadFont(std::string const& filename, float fontSize, int textureWidth, int textureHeight)
   {
     Font * font = 0;

@@ -39,9 +39,11 @@ include_directories(${LIBS_FOLDER}/include
                     ${CMAKE_CURRENT_SOURCE_DIR}/src/enet/include)
 
 set(SOURCE
+  src/glew.c
   src/main.cpp
   src/gfx.cpp
-  src/glew.c
+  src/world.cpp
+  src/player.cpp
 
   src/enet/callbacks.c
   src/enet/host.c

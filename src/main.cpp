@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "gfx.h"
+#include "world.h"
 
 #include <stdio.h>
 
@@ -125,6 +126,8 @@ int main(int argc, char * argv[])
   gfx::setProjection(50, 1.0, 1000.0);
   gfx::setCamera(0, 0, -15, 0, 0, 0);
 
+  world::create_empty(10, 10);
+
   mainLoop();
 
   gfx::destroyVertexBuffer(cubeVB);
@@ -208,6 +211,8 @@ void mainLoop()
     }
 
     gfx::clear(0.1, 0.3, 0.4);
+
+    world::render();
 
     gfx::begin(gfx::Feature::VertexColor | gfx::Feature::Proj3D);
 

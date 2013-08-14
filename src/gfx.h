@@ -57,7 +57,7 @@ namespace gfx
 
   void resize(uint32_t width, uint32_t height);
 
-  //Texture * loadTexture(const char * filename);
+  Texture * loadTexture(const char * filename);
   //Font * loadFont(const char * filename, float fontSize, int texWidth, int texHeight);
 
   const Memory * alloc(uint32_t size);
