@@ -27,7 +27,7 @@ namespace gfx
   };
 
   const char * vertexShaderCode =
-    "attribute vec2 inPosition;\n"
+    "attribute vec3 inPosition;\n"
     "#ifdef USE_VERTEX_COLOR\n"
     "  attribute vec4 inVertexColor;\n"
     "  varying vec4 vertexColor;\n"
@@ -36,13 +36,16 @@ namespace gfx
     "  attribute vec2 inTexCoord;\n"
     "  varying vec2 texCoord;\n"
     "#endif\n"
+    "#ifdef USE_LIGHTING\n"
+    "  attribute vec3 inNormal;\n"
+    "#endif\n"
     "uniform mat4 viewProjectionMatrix;\n"
     "uniform mat4 modelMatrix;\n"
     "uniform vec4 texOffset;\n"
     "\n"
     "void main()\n"
     "{\n"
-    "  gl_Position = viewProjectionMatrix * modelMatrix * vec4(inPosition, 0.0, 1.0);\n"
+    "  gl_Position = viewProjectionMatrix * modelMatrix * vec4(inPosition, 1.0);\n"
     "  #ifdef USE_VERTEX_COLOR\n"
     "    vertexColor = inVertexColor;\n"
     "  #endif\n"
@@ -60,9 +63,6 @@ namespace gfx
     "  varying vec2 texCoord;\n"
     "  uniform sampler2D texture;\n"
     "#endif\n"
-    "#ifdef USE_TINT\n"
-    "  uniform vec4 tintColor;\n"
-    "#endif\n"
     "\n"
     "void main()\n"
     "{\n"
@@ -74,9 +74,6 @@ namespace gfx
     "    vec4 textureColor = texture2D(texture, texCoord);\n"
     "    textureColor.rgb *= textureColor.rgb;\n"
     "    finalColor *= textureColor;\n"
-    "  #endif\n"
-    "  #ifdef USE_TINT\n"
-    "    finalColor *= tintColor;\n"
     "  #endif\n"
     "  gl_FragColor = vec4(sqrt(finalColor.rgb), finalColor.a);\n"
     "}\n";
@@ -103,7 +100,6 @@ namespace gfx
     GLuint viewProjectionUniform;
     GLuint modelUniform;
     GLuint textureUniform;
-    GLuint tintUniform;
     GLuint texOffsetUniform;
   };
 
@@ -222,6 +218,9 @@ namespace gfx
 
     effect->positionAttribute = glGetAttribLocation(program, "inPosition");
 
+    if (feature & Feature::Lighting)
+      effect->normalAttribute = glGetAttribLocation(program, "inNormal");
+
     if (feature & Feature::VertexColor)
       effect->colorAttribute = glGetAttribLocation(program, "inVertexColor");
 
@@ -252,7 +251,10 @@ namespace gfx
     glewInit();
 
     glDisable(GL_CULL_FACE);
-    glDisable(GL_DEPTH_TEST);
+    glClearDepth(1.0f);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glShadeModel(GL_SMOOTH);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -302,11 +304,11 @@ namespace gfx
     return mem;
   }
 
-  const Memory * makeRef(void * data, uint32_t size)
+  const Memory * makeRef(const void * data, uint32_t size)
   {
     Memory * mem = new Memory;
     _refMemory.insert(mem);
-    mem->data = static_cast<uint8_t *>(data);
+    mem->data = static_cast<uint8_t *>(const_cast<void *>(data));
     mem->size = size;
     return mem;
   }
@@ -522,12 +524,7 @@ namespace gfx
     if (decl._position.size)
     {
       glEnableVertexAttribArray(effect->positionAttribute);
-      glVertexAttribPointer(effect->positionAttribute, decl._position.size, decl._position.type, GL_FALSE, decl._stride, (void *)decl._position.offset);
-      CHECK_GL_ERROR();
-    }
-    else
-    {
-      glDisableVertexAttribArray(effect->positionAttribute);
+      glVertexAttribPointer(effect->positionAttribute, decl._position.size, decl._position.type, decl._position.normalize, decl._stride, (void *)decl._position.offset);
       CHECK_GL_ERROR();
     }
 
@@ -535,12 +532,7 @@ namespace gfx
     if (effect->features & Feature::Lighting && decl._normal.size)
     {
       glEnableVertexAttribArray(_impl->currentEffect->normalAttribute);
-      glVertexAttribPointer(effect->normalAttribute, decl._normal.size, decl._normal.type, GL_FALSE, decl._stride, (void *)decl._normal.offset);
-      CHECK_GL_ERROR();
-    }
-    else
-    {
-      glDisableVertexAttribArray(effect->normalAttribute);
+      glVertexAttribPointer(effect->normalAttribute, decl._normal.size, decl._normal.type, decl._normal.normalize, decl._stride, (void *)decl._normal.offset);
       CHECK_GL_ERROR();
     }
 
@@ -548,12 +540,7 @@ namespace gfx
     if (effect->features & Feature::VertexColor && decl._color.size)
     {
       glEnableVertexAttribArray(_impl->currentEffect->colorAttribute);
-      glVertexAttribPointer(effect->colorAttribute, decl._color.size, decl._color.type, GL_FALSE, decl._stride, (void *)decl._color.offset);
-      CHECK_GL_ERROR();
-    }
-    else
-    {
-      glDisableVertexAttribArray(effect->colorAttribute);
+      glVertexAttribPointer(effect->colorAttribute, decl._color.size, decl._color.type, decl._color.normalize, decl._stride, (void *)decl._color.offset);
       CHECK_GL_ERROR();
     }
 
@@ -561,12 +548,7 @@ namespace gfx
     if (effect->features & Feature::Texture && decl._texCoord.size)
     {
       glEnableVertexAttribArray(_impl->currentEffect->texCoordAttribute);
-      glVertexAttribPointer(effect->texCoordAttribute, decl._texCoord.size, decl._texCoord.type, GL_FALSE, decl._stride, (void *)decl._texCoord.offset);
-      CHECK_GL_ERROR();
-    }
-    else
-    {
-      glDisableVertexAttribArray(effect->texCoordAttribute);
+      glVertexAttribPointer(effect->texCoordAttribute, decl._texCoord.size, decl._texCoord.type, decl._texCoord.normalize, decl._stride, (void *)decl._texCoord.offset);
       CHECK_GL_ERROR();
     }
   }
@@ -574,9 +556,46 @@ namespace gfx
   void setIndexBuffer(IndexBuffer * buffer)
   {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->id);
+    CHECK_GL_ERROR();
   }
 
   // -- Drawing --
+
+  void begin(uint32_t features)
+  {
+    assert(_impl->currentEffect == 0);
+    _impl->currentEffect = getEffect(features, _impl);
+    assert(_impl->currentEffect);
+
+    glUseProgram(_impl->currentEffect->program);
+
+    float viewProjMatrix[16];
+
+    if (features & Feature::Proj2D)
+    {
+      memcpy(viewProjMatrix, _impl->projMatrix2D, sizeof(float) * 16);
+    }
+    else
+    {
+      math::mtxMul(viewProjMatrix, _impl->viewMatrix3D, _impl->projMatrix3D);
+    }
+
+    glUniformMatrix4fv(_impl->currentEffect->viewProjectionUniform, 1, GL_FALSE, viewProjMatrix);
+
+    if (features & Feature::Texture)
+      glActiveTexture(GL_TEXTURE0);
+
+    CHECK_GL_ERROR();
+  }
+
+  void end()
+  {
+    assert(_impl->currentEffect);
+
+    glUseProgram(0);
+    CHECK_GL_ERROR();
+    _impl->currentEffect = 0;
+  }
 
   void clear(float r, float g, float b)
   {
@@ -590,106 +609,13 @@ namespace gfx
     CHECK_GL_ERROR();
   }
 
-#if 0
-  void RendererGL32::enableDebugging()
-  {
-    d->debugging = true;
-  }
-
-  void RendererGL32::disableDebugging()
-  {
-    d->debugging = false;
-  }
-  void begin(int features)
-  {
-    assert(_impl->currentEffect == 0);
-
-    _impl->currentEffect = getEffect(features, _impl);
-
-    glUseProgram(_impl->currentEffect->program);
-    glUniformMatrix4fv(_impl->currentEffect->viewProjectionUniform, 1, GL_FALSE, _impl->viewProjectionMatrix);
-
-    glEnableVertexAttribArray(_impl->currentEffect->positionAttribute);
-
-    if (features & Feature::VertexColor)
-      glEnableVertexAttribArray(_impl->currentEffect->colorAttribute);
-
-    if (features & Feature::Texture)
-    {
-      glEnableVertexAttribArray(_impl->currentEffect->texCoordAttribute);
-      glActiveTexture(GL_TEXTURE0);
-    }
-
-    CHECK_GL_ERROR();
-  }
-
-  void end()
-  {
-    assert(_impl->currentEffect);
-
-    CHECK_GL_ERROR();
-
-    glDisableVertexAttribArray(_impl->currentEffect->positionAttribute);
-    if (_impl->currentEffect->features & Feature::VertexColor)
-      glDisableVertexAttribArray(_impl->currentEffect->colorAttribute);
-
-    if (_impl->currentEffect->features & Feature::Texture)
-    {
-      glDisableVertexAttribArray(_impl->currentEffect->texCoordAttribute);
-      //glActiveTexture(GL_TEXTURE0);
-      //glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
-    glUseProgram(0);
-
-    CHECK_GL_ERROR();
-    d->currentEffect = 0;
-  }
-
-  void RendererGL32::setTexture(Texture * texture, float x, float y, float width, float height)
-  {
-    assert(d->currentEffect);
-
-    TextureGL * tex = static_cast<TextureGL *>(texture);
-
-    if (d->currentTexture != tex->name)
-    {
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, tex->name);
-      d->currentTexture = tex->name;
-    }
-
-    glUniform4f(d->currentEffect->texOffsetUniform, x, y, width, height);
-  }
-
-  void RendererGL32::setTintColor(Color const& color)
-  {
-    assert(d->currentEffect && (d->currentEffect->features & Feature::TintColor));
-    glUniform4f(d->currentEffect->tintUniform, color.r, color.g, color.b, color.a);
-  }
-
-  void RendererGL32::setTransform(Matrix const& transform)
-  {
-    assert(d->currentEffect);
-
-    float mat[16] = {
-      transform.a, transform.c, 0.0f, 0.0f,
-      transform.b, transform.d, 0.0f, 0.0f,
-      0.0f,        0.0f,        1.0f, 0.0f,
-      transform.x, transform.y, 0.0f, 1.0f
-    };
-
-    glUniformMatrix4fv(d->currentEffect->modelUniform, 1, GL_FALSE, mat);
-  }
-#endif
-
   // -- Transformations --
 
   static void updateProjectionMatrix()
   {
-    const float aspect = (float)_impl->height / (float)_impl->width;
+    const float aspect = (float)_impl->width / (float)_impl->height;
 
-    math::mtxOrtho(_impl->projMatrix2D, 0, _impl->width, _impl->height, 0, 0, 1);
+    math::mtxOrtho(_impl->projMatrix2D, 0, _impl->width, _impl->height, 0, -1, 1);
     math::mtxProj(_impl->projMatrix3D, _impl->fovy, aspect, _impl->near, _impl->far);
   }
 
@@ -723,7 +649,7 @@ namespace gfx
 
     math::mtxRotateXYZ(rotate, pitch, yaw, roll);
     math::mtxTranslate(trans, x, y, z);
-    math::mtxMul(final, trans, rotate);
+    math::mtxMul(final, rotate, trans);
     setTransform(final);
   }
 
@@ -764,39 +690,43 @@ namespace gfx
     memset(&_texCoord, 0, sizeof(VertexDecl::Element));
   }
 
-  VertexDecl & VertexDecl::position(uint32_t size, uint32_t type)
+  VertexDecl & VertexDecl::position(uint32_t size, uint32_t type, bool normalize)
   {
     _position.size = size;
     _position.type = type;
     _position.offset = _stride;
-    _stride += getTypeSize(type);
+    _position.normalize = normalize;
+    _stride += getTypeSize(type) * size;
     return *this;
   }
 
-  VertexDecl & VertexDecl::normal(uint32_t size, uint32_t type)
+  VertexDecl & VertexDecl::normal(uint32_t size, uint32_t type, bool normalize)
   {
     _normal.size = size;
     _normal.type = type;
     _normal.offset = _stride;
-    _stride += getTypeSize(type);
+    _normal.normalize = normalize;
+    _stride += getTypeSize(type) * size;
     return *this;
   }
 
-  VertexDecl & VertexDecl::color(uint32_t size, uint32_t type)
+  VertexDecl & VertexDecl::color(uint32_t size, uint32_t type, bool normalize)
   {
     _color.size = size;
     _color.type = type;
     _color.offset = _stride;
-    _stride += getTypeSize(type);
+    _color.normalize = normalize;
+    _stride += getTypeSize(type) * size;
     return *this;
   }
 
-  VertexDecl & VertexDecl::texCoord(uint32_t size, uint32_t type)
+  VertexDecl & VertexDecl::texCoord(uint32_t size, uint32_t type, bool normalize)
   {
     _texCoord.size = size;
     _texCoord.type = type;
     _texCoord.offset = _stride;
-    _stride += getTypeSize(type);
+    _texCoord.normalize = normalize;
+    _stride += getTypeSize(type) * size;
     return *this;
   }
 

@@ -10,6 +10,45 @@
 static SDL_Window * _window = 0;
 static SDL_GLContext _context;
 
+struct PosColorVertex
+{
+  float x;
+  float y;
+  float z;
+  uint32_t rgba;
+};
+
+static gfx::VertexDecl PosColorDecl;
+
+static PosColorVertex cubeVertices[8] = {
+  {-1.0f, 1.0f, 1.0f, 0xff000000 },
+{ 1.0f, 1.0f, 1.0f, 0xff0000ff },
+{-1.0f, -1.0f, 1.0f, 0xff00ff00 },
+{ 1.0f, -1.0f, 1.0f, 0xff00ffff },
+{-1.0f, 1.0f, -1.0f, 0xffff0000 },
+{ 1.0f, 1.0f, -1.0f, 0xffff00ff },
+{-1.0f, -1.0f, -1.0f, 0xffffff00 },
+{ 1.0f, -1.0f, -1.0f, 0xffffffff },
+};
+
+static const uint16_t cubeIndices[36] = {
+  0, 1, 2, // 0
+  1, 3, 2,
+  4, 6, 5, // 2
+  5, 6, 7,
+  0, 2, 4, // 4
+  4, 2, 6,
+  1, 5, 3, // 6
+  5, 7, 3,
+  0, 4, 1, // 8
+  4, 5, 1,
+  2, 3, 6, // 10
+  6, 3, 7,
+};
+
+gfx::VertexBuffer * cubeVB = NULL;
+gfx::IndexBuffer * cubeIB = NULL;
+
 static void criticalError(const char *title, const char * text)
 {
 #if defined(WIN32) || defined(_WINDOWS)
@@ -28,8 +67,8 @@ int SDL_main(int argc, char * argv[])
 int main(int argc, char * argv[])
 #endif
 {
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
   //SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
@@ -74,7 +113,22 @@ int main(int argc, char * argv[])
       SetThreadAffinityMask(GetCurrentThread(), affinity_mask);
   #endif
 
+  PosColorDecl.position(3, GL_FLOAT)
+              .color(4, GL_UNSIGNED_BYTE, true);
+
+  const gfx::Memory * mem = gfx::makeRef(cubeVertices, sizeof(cubeVertices));
+  cubeVB = gfx::createVertexBuffer(mem, PosColorDecl);
+
+  mem = gfx::makeRef(cubeIndices, sizeof(cubeIndices));
+  cubeIB = gfx::createIndexBuffer(mem);
+
+  gfx::setProjection(50, 1.0, 1000.0);
+  gfx::setCamera(0, 0, -15, 0, 0, 0);
+
   mainLoop();
+
+  gfx::destroyVertexBuffer(cubeVB);
+  gfx::destroyIndexBuffer(cubeIB);
 
   gfx::shutdown();
 
@@ -90,6 +144,8 @@ void mainLoop()
   SDL_Event event;
   uint64_t oldTimeStamp = SDL_GetPerformanceCounter();
 
+  float yaw = 0.0f;
+
   bool running = true;
   while (running)
   {
@@ -99,6 +155,8 @@ void mainLoop()
 
     if (dt > 0.1f)
       dt = 1.0f / 60.0f;
+
+    yaw += dt * M_PI * 0.5;
 
     SDL_GL_SwapWindow(_window);
 
@@ -150,5 +208,15 @@ void mainLoop()
     }
 
     gfx::clear(0.1, 0.3, 0.4);
+
+    gfx::begin(gfx::Feature::VertexColor | gfx::Feature::Proj3D);
+
+    gfx::setVertexBuffer(cubeVB);
+    gfx::setIndexBuffer(cubeIB);
+    gfx::setTransform(0, 0, 0, yaw, yaw, 0);
+
+    gfx::draw(36);
+
+    gfx::end();
   }
 }

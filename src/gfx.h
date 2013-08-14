@@ -29,14 +29,15 @@ namespace gfx
       uint16_t size;
       uint16_t type;
       uint32_t offset;
+      bool normalize;
     };
 
     VertexDecl();
 
-    VertexDecl & position(uint32_t size, uint32_t type);
-    VertexDecl & normal(uint32_t size, uint32_t type);
-    VertexDecl & color(uint32_t size, uint32_t type);
-    VertexDecl & texCoord(uint32_t size, uint32_t type);
+    VertexDecl & position(uint32_t size, uint32_t type, bool normalize = false);
+    VertexDecl & normal(uint32_t size, uint32_t type, bool normalize = false);
+    VertexDecl & color(uint32_t size, uint32_t type, bool normalize = false);
+    VertexDecl & texCoord(uint32_t size, uint32_t type, bool normalize = false);
 
     Element _position;
     Element _normal;
@@ -60,7 +61,7 @@ namespace gfx
   //Font * loadFont(const char * filename, float fontSize, int texWidth, int texHeight);
 
   const Memory * alloc(uint32_t size);
-  const Memory * makeRef(void * data, uint32_t size);
+  const Memory * makeRef(const void * data, uint32_t size);
 
   VertexBuffer * createVertexBuffer(const Memory * mem, VertexDecl const& decl);
   IndexBuffer * createIndexBuffer(const Memory * mem);
@@ -83,8 +84,8 @@ namespace gfx
   void setTransform(const float * transform);
   void setTransform(float x, float y, float z, float yaw, float pitch, float roll);
 
-  //void begin(uint32_t features);
-  //void end();
+  void begin(uint32_t features);
+  void end();
 
   void clear(float r, float g, float b);
   void draw(uint32_t count);
