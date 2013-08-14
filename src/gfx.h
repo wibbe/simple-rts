@@ -16,10 +16,9 @@ namespace gfx
     {
       Texture        = 1 << 1,
       VertexColor    = 1 << 2,
-      TintColor      = 1 << 3,
-      Lighting       = 1 << 4,
-      Proj2D         = 1 << 4,
-      Proj3D         = 1 << 5
+      Lighting       = 1 << 3,
+      Proj2D         = 1 << 10,
+      Proj3D         = 1 << 11
     };
   };
 
@@ -52,7 +51,6 @@ namespace gfx
     uint32_t size;
   };
 
-
   void init(int width, int height);
   void shutdown();
 
@@ -64,7 +62,6 @@ namespace gfx
   const Memory * alloc(uint32_t size);
   const Memory * makeRef(void * data, uint32_t size);
 
-  // Buffer routines
   VertexBuffer * createVertexBuffer(const Memory * mem, VertexDecl const& decl);
   IndexBuffer * createIndexBuffer(const Memory * mem);
 
@@ -80,11 +77,16 @@ namespace gfx
   void setVertexBuffer(VertexBuffer * buffer);
   void setIndexBuffer(IndexBuffer * buffer);
 
-  void projection(float fovy, float near, float far);
+  void setProjection(float fovy, float near, float far);
+  void setCamera(float eyeX, float eyeY, float eyeZ, float atX, float atY, float atZ);
+
+  void setTransform(const float * transform);
+  void setTransform(float x, float y, float z, float yaw, float pitch, float roll);
 
   //void begin(uint32_t features);
   //void end();
 
-  //void draw(uint32_t start, uint32_t primitiveCount);
+  void clear(float r, float g, float b);
+  void draw(uint32_t count);
 
 }

@@ -100,6 +100,8 @@ void mainLoop()
     if (dt > 0.1f)
       dt = 1.0f / 60.0f;
 
+    SDL_GL_SwapWindow(_window);
+
     while (SDL_PollEvent(&event))
     {
       switch (event.type)
@@ -147,6 +149,6 @@ void mainLoop()
       }
     }
 
-    SDL_GL_SwapWindow(_window);
+    gfx::clear(0.1, 0.3, 0.4);
   }
 }

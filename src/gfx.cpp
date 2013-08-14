@@ -1,6 +1,7 @@
 
 #include "config.h"
 #include "gfx.h"
+#include "fpumath.h"
 
 #include "stb_image.cpp"
 
@@ -148,10 +149,9 @@ namespace gfx
 
     bool debugging;
 
-    GLfloat orthoViewProjectionMatrix[16];
-    GLfloat perspectiveProjectionMatrix[16];
-    GLfloat perspectiveViewMatrix[16];
-    GLfloat perspectiveViewProjectionMatrix[16];
+    GLfloat projMatrix2D[16];
+    GLfloat projMatrix3D[16];
+    GLfloat viewMatrix3D[16];
   };
 
   static Impl * _impl = NULL;
@@ -189,10 +189,8 @@ namespace gfx
       header += "#define USE_TEXTURE\n";
     if (feature & Feature::VertexColor)
       header += "#define USE_VERTEX_COLOR\n";
-    if (feature & Feature::TintColor)
-      header += "#define USE_TINT\n";
-    //if (feature & Feature::Lighting)
-    //  header += "#define USE_LIGHTING\n";
+    if (feature & Feature::Lighting)
+      header += "#define USE_LIGHTING\n";
 
     std::string vertexCode = header + std::string(vertexShaderCode);
     std::string fragmentCode = header + std::string(fragmentShaderCode);
@@ -234,9 +232,6 @@ namespace gfx
       effect->texOffsetUniform = glGetUniformLocation(program, "texOffset");
       glUniform1i(effect->textureUniform, 0);
     }
-
-    if (feature & Feature::TintColor)
-      effect->tintUniform = glGetUniformLocation(program, "tintColor");
 
     effect->viewProjectionUniform = glGetUniformLocation(program, "viewProjectionMatrix");
     effect->modelUniform = glGetUniformLocation(program, "modelMatrix");
@@ -492,21 +487,25 @@ namespace gfx
   {
     assert(buffer->dynamic);
     glBufferData(GL_ARRAY_BUFFER, mem->size, mem->data, GL_DYNAMIC_DRAW);
+    dispose(mem);
   }
 
   void updateIndexBuffer(IndexBuffer * buffer, const Memory * mem)
   {
     assert(buffer->dynamic);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, mem->size, mem->data, GL_DYNAMIC_DRAW);
+    dispose(mem);
   }
 
   void destroyVertexBuffer(VertexBuffer * buffer)
   {
+    glDeleteBuffers(1, &buffer->id);
     delete buffer;
   }
 
   void destroyIndexBuffer(IndexBuffer * buffer)
   {
+    glDeleteBuffers(1, &buffer->id);
     delete buffer;
   }
 
@@ -516,6 +515,8 @@ namespace gfx
 
     VertexDecl & decl = buffer->decl;
     Effect * effect = _impl->currentEffect;
+
+    glBindBuffer(GL_ARRAY_BUFFER, buffer->id);
 
     // Position
     if (decl._position.size)
@@ -572,9 +573,22 @@ namespace gfx
 
   void setIndexBuffer(IndexBuffer * buffer)
   {
-
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->id);
   }
 
+  // -- Drawing --
+
+  void clear(float r, float g, float b)
+  {
+    glClearColor(r, g, b, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  }
+
+  void draw(uint32_t count)
+  {
+    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, 0);
+    CHECK_GL_ERROR();
+  }
 
 #if 0
   void RendererGL32::enableDebugging()
@@ -669,30 +683,48 @@ namespace gfx
   }
 #endif
 
+  // -- Transformations --
+
   static void updateProjectionMatrix()
   {
-    float w = _impl->width;
-    float h = -_impl->height;
-    float p = -2.0f;
-    float x = 1.0f;
-    float y = -1.0f;
-    float z = 1.0f;
+    const float aspect = (float)_impl->height / (float)_impl->width;
 
-    GLfloat * m = _impl->orthoViewProjectionMatrix;
-
-    m[0] = 2 / w; m[4] = 0;     m[8] = 0;       m[12] = -x;
-    m[1] = 0;     m[5] = 2 / h; m[9] = 0;       m[13] = -y;
-    m[2] = 0;     m[6] = 0;     m[10] = -2 / p; m[14] = -z;
-    m[3] = 0;     m[7] = 0;     m[11] = 0;      m[15] = 1;
+    math::mtxOrtho(_impl->projMatrix2D, 0, _impl->width, _impl->height, 0, 0, 1);
+    math::mtxProj(_impl->projMatrix3D, _impl->fovy, aspect, _impl->near, _impl->far);
   }
 
-  void projection(float fovy, float near, float far)
+  void setProjection(float fovy, float near, float far)
   {
     _impl->fovy = fovy;
     _impl->near = near;
     _impl->far = far;
 
     updateProjectionMatrix();
+  }
+
+  void setCamera(float eyeX, float eyeY, float eyeZ, float atX, float atY, float atZ)
+  {
+    const float eye[3] = { eyeX, eyeY, eyeZ };
+    const float at[3] = { atX, atY, atZ };
+    math::mtxLookAt(_impl->viewMatrix3D, eye, at);
+  }
+
+  void setTransform(const float * transform)
+  {
+    assert(_impl->currentEffect);
+    glUniformMatrix4fv(_impl->currentEffect->modelUniform, 1, GL_FALSE, transform);
+  }
+
+  void setTransform(float x, float y, float z, float yaw, float pitch, float roll)
+  {
+    float rotate[16];
+    float trans[16];
+    float final[16];
+
+    math::mtxRotateXYZ(rotate, pitch, yaw, roll);
+    math::mtxTranslate(trans, x, y, z);
+    math::mtxMul(final, trans, rotate);
+    setTransform(final);
   }
 
   void resize(uint32_t width, uint32_t height)
@@ -703,40 +735,7 @@ namespace gfx
     glViewport(0, 0, width, height);
     updateProjectionMatrix();
   }
-#if 0
-  void RendererGL32::clear(Color const& color)
-  {
-    glClearColor(color.r, color.g, color.b, color.a);
-    glClear(GL_COLOR_BUFFER_BIT);
-  }
 
-  void RendererGL32::uploadVertex(Vector2 * data, int count)
-  {
-    assert(d->currentEffect);
-    glVertexAttribPointer(d->currentEffect->positionAttribute, 2, GL_FLOAT, GL_FALSE, 0, data);
-    CHECK_GL_ERROR();
-  }
-
-  void RendererGL32::uploadColor(Color * data, int count)
-  {
-    assert(d->currentEffect && d->currentEffect->features & Feature::VertexColor);
-    glVertexAttribPointer(d->currentEffect->colorAttribute, 4, GL_FLOAT, GL_FALSE, 0, data);
-    CHECK_GL_ERROR();
-  }
-
-  void RendererGL32::uploadTexCoord(Vector2 * data, int count)
-  {
-    assert(d->currentEffect && d->currentEffect->features & Feature::Texture);
-    glVertexAttribPointer(d->currentEffect->texCoordAttribute, 2, GL_FLOAT, GL_FALSE, 0, data);
-    CHECK_GL_ERROR();
-  }
-#endif
-
-  void draw(uint32_t start, uint32_t primitiveCount)
-  {
-    glDrawArrays(GL_TRIANGLES, start, primitiveCount);
-    CHECK_GL_ERROR();
-  }
   // -- VertexDecl --
 
   static uint32_t getTypeSize(uint32_t type)
