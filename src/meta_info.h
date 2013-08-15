@@ -156,7 +156,7 @@ namespace meta {
     { \
       static TYPE from(std::string const& str) \
       { \
-        return std::atof(str.c_str()); \
+        return std::atoi(str.c_str()); \
       } \
       static std::string to(TYPE val) \
       { \
