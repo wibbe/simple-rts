@@ -12,10 +12,13 @@ namespace tcl {
     {
       CProcedure(FuncT function) : _function(function) { }
 
-      RetCode call(std::vector<std::string> const& args)
+      ReturnCode call(std::vector<std::string> const& args)
       {
+        if (args.size() != 1)
+          return _arityError(args[0]);
+
         _function();
-        return 0;
+        return RET_OK;
       }
 
       FuncT _function;
@@ -26,10 +29,13 @@ namespace tcl {
     {
       CProcedure(FuncT function) : _function(function) { }
 
-      RetCode call(std::vector<std::string> const& args)
+      ReturnCode call(std::vector<std::string> const& args)
       {
+        if (args.size() != 1)
+          return _arityError(args[0]);
+
         _function();
-        return 0;
+        return RET_OK;
       }
 
       FuncT _function;
@@ -40,10 +46,13 @@ namespace tcl {
     {
       CProcedure(FuncT function) : _function(function) { }
 
-      RetCode call(std::vector<std::string> const& args)
+      ReturnCode call(std::vector<std::string> const& args)
       {
+        if (args.size() != 2)
+          return _arityError(args[0]);
+
         _function(meta::String<P1>::from(args[1]));
-        return 0;
+        return RET_OK;
       }
 
       FuncT _function;
@@ -54,11 +63,14 @@ namespace tcl {
     {
       CProcedure(FuncT function) : _function(function) { }
 
-      RetCode call(std::vector<std::string> const& args)
+      ReturnCode call(std::vector<std::string> const& args)
       {
+        if (args.size() != 2)
+          return _arityError(args[0]);
+
         ReturnT ret = _function(meta::String<P1>::from(args[1]));
         tcl::_return(meta::String<ReturnT>::to(ret));
-        return 0;
+        return RET_OK;
       }
 
       FuncT _function;
@@ -69,11 +81,14 @@ namespace tcl {
     {
       CProcedure(FuncT function) : _function(function) { }
 
-      RetCode call(std::vector<std::string> const& args)
+      ReturnCode call(std::vector<std::string> const& args)
       {
+        if (args.size() != 3)
+          return _arityError(args[0]);
+
         _function(meta::String<P1>::from(args[1]),
                   meta::String<P2>::from(args[2]));
-        return 0;
+        return RET_OK;
       }
 
       FuncT _function;
@@ -84,12 +99,15 @@ namespace tcl {
     {
       CProcedure(FuncT function) : _function(function) { }
 
-      RetCode call(std::vector<std::string> const& args)
+      ReturnCode call(std::vector<std::string> const& args)
       {
+        if (args.size() != 3)
+          return _arityError(args[0]);
+
         ReturnT ret = _function(meta::String<P1>::from(args[1]),
                                 meta::String<P2>::from(args[2]));
         tcl::_return(meta::String<ReturnT>::to(ret));
-        return 0;
+        return RET_OK;
       }
 
       FuncT _function;
@@ -100,11 +118,15 @@ namespace tcl {
     {
       CProcedure(FuncT function) : _function(function) { }
 
-      RetCode call(std::vector<std::string> const& args)
+      ReturnCode call(std::vector<std::string> const& args)
       {
+        if (args.size() != 4)
+          return _arityError(args[0]);
+
         _function(meta::String<P1>::from(args[1]),
-                  meta::String<P2>::from(args[2]));
-        return 0;
+                  meta::String<P2>::from(args[2]),
+                  meta::String<P3>::from(args[3]));
+        return RET_OK;
       }
 
       FuncT _function;
@@ -115,13 +137,16 @@ namespace tcl {
     {
       CProcedure(FuncT function) : _function(function) { }
 
-      RetCode call(std::vector<std::string> const& args)
+      ReturnCode call(std::vector<std::string> const& args)
       {
+        if (args.size() != 4)
+          return _arityError(args[0]);
+
         ReturnT ret = _function(meta::String<P1>::from(args[1]),
                                 meta::String<P2>::from(args[2]),
                                 meta::String<P3>::from(args[3]));
         tcl::_return(meta::String<ReturnT>::to(ret));
-        return 0;
+        return RET_OK;
       }
 
       FuncT _function;
@@ -131,11 +156,10 @@ namespace tcl {
   template <typename FuncT>
   bool bind(const char * name, FuncT func)
   {
-    _registerProc(name, static_cast<Procedure *>((new impl::CProcedure<meta::Length<typename meta::FunctionInfo<FuncT>::Params>::Value,
-                                                                       FuncT,
-                                                                       typename meta::FunctionInfo<FuncT>::Return,
-                                                                       typename meta::FunctionInfo<FuncT>::Params>(func))));
-    return true;
+    return _registerProc(name, static_cast<Procedure *>((new impl::CProcedure<meta::Length<typename meta::FunctionInfo<FuncT>::Params>::Value,
+                                                                              FuncT,
+                                                                              typename meta::FunctionInfo<FuncT>::Return,
+                                                                              typename meta::FunctionInfo<FuncT>::Params>(func))));
   }
 
 }

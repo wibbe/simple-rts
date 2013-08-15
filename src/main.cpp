@@ -74,6 +74,8 @@ int main(int argc, char * argv[])
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
   //SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
+  tcl::init();
+
   if (SDL_Init(SDL_INIT_VIDEO) < 0)
     criticalError("Could not initialize SDL", SDL_GetError());
 
@@ -85,8 +87,6 @@ int main(int argc, char * argv[])
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-
-  tcl::init();
 
   _window = SDL_CreateWindow("Simple RTS",
                              SDL_WINDOWPOS_CENTERED,
@@ -127,9 +127,10 @@ int main(int argc, char * argv[])
   cubeIB = gfx::createIndexBuffer(mem);
 
   gfx::setProjection(50, 1.0, 1000.0);
-  gfx::setCamera(0, 0, -15, 0, 0, 0);
+  gfx::setCamera(0, 5, -15, 0, 0, 0);
 
-  world::createEmpty(10, 10);
+  // Create an empty default world
+  world::createEmpty(100, 100);
 
   mainLoop();
 

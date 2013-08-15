@@ -40,6 +40,9 @@ namespace world
       gfx::destroyVertexBuffer(_terrainVB);
     if (_terrainIB)
       gfx::destroyIndexBuffer(_terrainIB);
+
+    _terrainVB = NULL;
+    _terrainIB = NULL;
   }
 
   static void initGfx()
@@ -53,6 +56,7 @@ namespace world
       initialized = true;
     }
 
+    /*
     std::vector<TerrainVertex> vb;
     std::vector<uint16_t> ib;
 
@@ -68,9 +72,24 @@ namespace world
         TerrainVertex vertex = { startX + x, 0, startZ + z, 0xff00ff00 };
         vb.push_back(vertex);
       }
+    */
 
-    const gfx::Memory * mem = gfx::makeRef(&vb[0], vb.size() * sizeof(TerrainVertex));
+    const float halfX = _width * 0.5f;
+    const float halfZ = _height * 0.5f;
+    const TerrainVertex terrainVertices[4] = {
+      { -halfX, 0, -halfZ, 0xff0ba500 },
+      { -halfX, 0,  halfZ, 0xff0ba500 },
+      {  halfX, 0,  halfZ, 0xff0ba500 },
+      {  halfX, 0, -halfZ, 0xff0ba500 },
+    };
+
+    static const uint16_t terrainIndicies[6] = { 0, 1, 2, 2, 3, 0 };
+
+    const gfx::Memory * mem = gfx::makeRef(terrainVertices, sizeof(terrainVertices));
     _terrainVB = gfx::createDynamicVertexBuffer(mem, _terrainDecl);
+
+    mem = gfx::makeRef(terrainIndicies, sizeof(terrainIndicies));
+    _terrainIB = gfx::createIndexBuffer(mem);
   }
 
   void createEmpty(uint32_t width, uint32_t height)
@@ -93,11 +112,16 @@ namespace world
 
   void render()
   {
-    gfx::begin(gfx::Feature::VertexColor | gfx::Feature::Proj3D);
-
-    gfx::end();
+    if (_terrainVB && _terrainIB)
+    {
+      gfx::begin(gfx::Feature::VertexColor | gfx::Feature::Proj3D);
+      gfx::setTransform(0, 0, 0, 0, 0, 0);
+      gfx::setVertexBuffer(_terrainVB);
+      gfx::setIndexBuffer(_terrainIB);
+      gfx::draw(6);
+      gfx::end();
+    }
   }
-
 
   // Tcl Bindings
   PROC("world::clear", clear)
