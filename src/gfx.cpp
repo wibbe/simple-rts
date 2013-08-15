@@ -63,12 +63,18 @@ namespace gfx
     "  varying vec2 texCoord;\n"
     "  uniform sampler2D texture;\n"
     "#endif\n"
+    "#ifdef USE_TINT_COLOR\n"
+    "  uniform vec4 tintColor;\n"
+    "#endif\n"
     "\n"
     "void main()\n"
     "{\n"
     "  vec4 finalColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
     "  #ifdef USE_VERTEX_COLOR\n"
     "    finalColor *= vertexColor;\n"
+    "  #endif\n"
+    "  #ifdef USE_TINT_COLOR\n"
+    "    finalColor *= tintColor;\n"
     "  #endif\n"
     "  #ifdef USE_TEXTURE\n"
     "    vec4 textureColor = texture2D(texture, texCoord);\n"
@@ -98,6 +104,7 @@ namespace gfx
     GLuint colorAttribute;
     GLuint texCoordAttribute;
     GLuint viewProjectionUniform;
+    GLuint tintUniform;
     GLuint modelUniform;
     GLuint textureUniform;
     GLuint texOffsetUniform;
@@ -187,6 +194,8 @@ namespace gfx
       header += "#define USE_VERTEX_COLOR\n";
     if (feature & Feature::Lighting)
       header += "#define USE_LIGHTING\n";
+    if (feature & Feature::TintColor)
+      header += "#define USE_TINT_COLOR\n";
 
     std::string vertexCode = header + std::string(vertexShaderCode);
     std::string fragmentCode = header + std::string(fragmentShaderCode);
@@ -234,6 +243,9 @@ namespace gfx
 
     effect->viewProjectionUniform = glGetUniformLocation(program, "viewProjectionMatrix");
     effect->modelUniform = glGetUniformLocation(program, "modelMatrix");
+
+    if (feature & Feature::TintColor)
+      effect->tintUniform = glGetUniformLocation(program, "tintColor");
 
     CHECK_GL_ERROR();
 
@@ -596,6 +608,12 @@ namespace gfx
     _impl->currentEffect = 0;
   }
 
+  void setTintColor(float r, float g, float b)
+  {
+    assert(_impl->currentEffect);
+    glUniform4f(_impl->currentEffect->tintUniform, r, g, b, 1);
+  }
+
   void clear(float r, float g, float b)
   {
     glClearColor(r, g, b, 1.0);
@@ -640,15 +658,23 @@ namespace gfx
     glUniformMatrix4fv(_impl->currentEffect->modelUniform, 1, GL_FALSE, transform);
   }
 
-  void setTransform(float x, float y, float z, float yaw, float pitch, float roll)
+  void setTransform(float x, float y, float z, float rotX, float rotY, float rotZ, float scaleX, float scaleY, float scaleZ)
   {
+    const float rad = M_PI / 180.0f;
+
     float rotate[16];
     float trans[16];
+    float scale[15];
+    float temp[16];
     float final[16];
 
-    math::mtxRotateXYZ(rotate, pitch, yaw, roll);
+    math::mtxRotateXYZ(rotate, rotX * rad, rotY * rad, rotZ * rad);
     math::mtxTranslate(trans, x, y, z);
-    math::mtxMul(final, rotate, trans);
+    math::mtxScale(scale, scaleX, scaleY, scaleZ);
+
+    math::mtxMul(temp, scale, rotate);
+    math::mtxMul(final, temp, trans);
+
     setTransform(final);
   }
 

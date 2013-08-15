@@ -34,7 +34,8 @@ namespace tcl {
         if (args.size() != 1)
           return _arityError(args[0]);
 
-        _function();
+        ReturnT ret = _function();
+        tcl::_return(meta::String<ReturnT>::to(ret));
         return RET_OK;
       }
 

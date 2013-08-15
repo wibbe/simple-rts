@@ -3,53 +3,22 @@
 
 #include "config.h"
 #include "gfx.h"
+#include "gfxe.h"
 #include "tcl.h"
 #include "world.h"
+#include "player.h"
+#include "input.h"
 
 #include <stdio.h>
 
-
 static SDL_Window * _window = 0;
 static SDL_GLContext _context;
+static bool _running = true;
 
-struct PosColorVertex
+static void quit()
 {
-  float x;
-  float y;
-  float z;
-  uint32_t rgba;
-};
-
-static gfx::VertexDecl PosColorDecl;
-
-static PosColorVertex cubeVertices[8] = {
-  {-1.0f, 1.0f, 1.0f, 0xff000000 },
-{ 1.0f, 1.0f, 1.0f, 0xff0000ff },
-{-1.0f, -1.0f, 1.0f, 0xff00ff00 },
-{ 1.0f, -1.0f, 1.0f, 0xff00ffff },
-{-1.0f, 1.0f, -1.0f, 0xffff0000 },
-{ 1.0f, 1.0f, -1.0f, 0xffff00ff },
-{-1.0f, -1.0f, -1.0f, 0xffffff00 },
-{ 1.0f, -1.0f, -1.0f, 0xffffffff },
-};
-
-static const uint16_t cubeIndices[36] = {
-  0, 1, 2, // 0
-  1, 3, 2,
-  4, 6, 5, // 2
-  5, 6, 7,
-  0, 2, 4, // 4
-  4, 2, 6,
-  1, 5, 3, // 6
-  5, 7, 3,
-  0, 4, 1, // 8
-  4, 5, 1,
-  2, 3, 6, // 10
-  6, 3, 7,
-};
-
-gfx::VertexBuffer * cubeVB = NULL;
-gfx::IndexBuffer * cubeIB = NULL;
+  _running = false;
+}
 
 static void criticalError(const char *title, const char * text)
 {
@@ -60,6 +29,9 @@ static void criticalError(const char *title, const char * text)
 #endif
   exit(1);
 }
+
+PROC("quit", quit);
+PROC("criticalError", criticalError);
 
 void mainLoop();
 
@@ -75,6 +47,8 @@ int main(int argc, char * argv[])
   //SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
   tcl::init();
+  player::init();
+  input::init();
 
   if (SDL_Init(SDL_INIT_VIDEO) < 0)
     criticalError("Could not initialize SDL", SDL_GetError());
@@ -101,6 +75,10 @@ int main(int argc, char * argv[])
   SDL_GL_SetSwapInterval(1);
 
   gfx::init(1280, 720);
+  gfxe::init();
+
+  tcl::evaluate("input::bind ESCAPE {quit}");
+  tcl::evaluate("input::bind2 MOUSE_LEFT {puts DOWN( [input::mouseX] x [input::mouseY] )} {puts UP}");
 
   // Make sure we are always running on the same core, otherwise we can get timing issues
   #if defined(WIN32) || defined(_WINDOWS)
@@ -117,28 +95,20 @@ int main(int argc, char * argv[])
       SetThreadAffinityMask(GetCurrentThread(), affinity_mask);
   #endif
 
-  PosColorDecl.position(3, GL_FLOAT)
-              .color(4, GL_UNSIGNED_BYTE, true);
-
-  const gfx::Memory * mem = gfx::makeRef(cubeVertices, sizeof(cubeVertices));
-  cubeVB = gfx::createVertexBuffer(mem, PosColorDecl);
-
-  mem = gfx::makeRef(cubeIndices, sizeof(cubeIndices));
-  cubeIB = gfx::createIndexBuffer(mem);
-
   gfx::setProjection(50, 1.0, 1000.0);
-  gfx::setCamera(0, 5, -15, 0, 0, 0);
 
   // Create an empty default world
   world::createEmpty(100, 100);
 
   mainLoop();
 
-  gfx::destroyVertexBuffer(cubeVB);
-  gfx::destroyIndexBuffer(cubeIB);
+  world::clear();
 
+  player::shutdown();
+  gfxe::shutdown();
   gfx::shutdown();
   tcl::shutdown();
+  input::shutdown();
 
   SDL_GL_DeleteContext(_context);
   SDL_DestroyWindow(_window);
@@ -147,15 +117,43 @@ int main(int argc, char * argv[])
   return 0;
 }
 
+static std::string toKeyStr(int key)
+{
+  switch (key)
+  {
+    case SDLK_ESCAPE:
+      return "ESCAPE";
+
+    case SDLK_RETURN:
+      return "RETURN";
+
+    case SDLK_LEFT:
+      return "LEFT";
+
+    case SDLK_RIGHT:
+      return "RIGHT";
+
+    case SDLK_UP:
+      return "UP";
+
+    case SDLK_DOWN:
+      return "DOWN";
+
+    default:
+      {
+        char buf[4];
+        snprintf(buf, 4, "%c", toupper(key));
+        return buf;
+      }
+  }
+}
+
 void mainLoop()
 {
   SDL_Event event;
   uint64_t oldTimeStamp = SDL_GetPerformanceCounter();
 
-  float yaw = 0.0f;
-
-  bool running = true;
-  while (running)
+  while (_running)
   {
     uint64_t now = SDL_GetPerformanceCounter();
     double dt = (now - oldTimeStamp) / (double)SDL_GetPerformanceFrequency();
@@ -164,8 +162,6 @@ void mainLoop()
     if (dt > 0.1f)
       dt = 1.0f / 60.0f;
 
-    yaw += dt * M_PI * 0.5;
-
     SDL_GL_SwapWindow(_window);
 
     while (SDL_PollEvent(&event))
@@ -173,7 +169,7 @@ void mainLoop()
       switch (event.type)
       {
         case SDL_QUIT:
-          running = false;
+          _running = false;
           break;
 
         case SDL_TEXTINPUT:
@@ -183,33 +179,51 @@ void mainLoop()
           break;
 
         case SDL_KEYDOWN:
-          {
-            //KeyEvent * keyEvent = new KeyEvent(sdlToEngine(event.key.keysym.sym), true);
-          }
+          input::key(toKeyStr(event.key.keysym.sym), true);
           break;
 
         case SDL_KEYUP:
-          {
-            //KeyEvent * keyEvent = new KeyEvent(sdlToEngine(event.key.keysym.sym), false);
-          }
+          input::key(toKeyStr(event.key.keysym.sym), false);
           break;
 
         case SDL_MOUSEBUTTONDOWN:
+          input::setMousePos(event.button.x, event.button.y);
+          switch (event.button.button)
           {
-            //MouseEvent * mouseEvent = new MouseEvent((Mouse::Values)event.button.button, true, event.button.x, event.button.y);
+            case SDL_BUTTON_LEFT:
+              input::key("MOUSE_LEFT", true);
+              break;
+
+            case SDL_BUTTON_MIDDLE:
+              input::key("MOUSE_MIDDLE", true);
+              break;
+
+            case SDL_BUTTON_RIGHT:
+              input::key("MOUSE_RIGHT", true);
+              break;
           }
           break;
 
         case SDL_MOUSEBUTTONUP:
+          input::setMousePos(event.button.x, event.button.y);
+          switch (event.button.button)
           {
-            //MouseEvent * mouseEvent = new MouseEvent((Mouse::Values)event.button.button, false, event.button.x, event.button.y);
+            case SDL_BUTTON_LEFT:
+              input::key("MOUSE_LEFT", false);
+              break;
+
+            case SDL_BUTTON_MIDDLE:
+              input::key("MOUSE_MIDDLE", false);
+              break;
+
+            case SDL_BUTTON_RIGHT:
+              input::key("MOUSE_RIGHT", false);
+              break;
           }
           break;
 
         case SDL_MOUSEMOTION:
-          {
-            //MouseEvent * mouseEvent = new MouseEvent(Mouse::None, false, event.motion.x, event.motion.y);
-          }
+          input::setMousePos(event.motion.x, event.motion.y);
           break;
 
       }
@@ -217,16 +231,8 @@ void mainLoop()
 
     gfx::clear(0.1, 0.3, 0.4);
 
+    player::setCamera();
     world::render();
-
-    gfx::begin(gfx::Feature::VertexColor | gfx::Feature::Proj3D);
-
-    gfx::setVertexBuffer(cubeVB);
-    gfx::setIndexBuffer(cubeIB);
-    gfx::setTransform(0, 0, 0, yaw, yaw, 0);
-
-    gfx::draw(36);
-
-    gfx::end();
+    player::render();
   }
 }

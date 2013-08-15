@@ -27,10 +27,7 @@ if (UNIX)
     set(EXTRA_LIBS ${EXTRA_LIBS} "-framework Cocoa")
     set(EXTRA_LIBS ${EXTRA_LIBS} "-framework ForceFeedback")
     set(EXTRA_LIBS ${EXTRA_LIBS} "-framework IOKit")
-    #set(CMAKE_OSX_ARCHITECTURES i386)
   else()
-    #set(CMAKE_C_FLAGS -m32)
-    #set(CMAKE_CXX_FLAGS -m32)
   endif()
 endif()
 
@@ -39,14 +36,16 @@ include_directories(${LIBS_FOLDER}/include
                     ${CMAKE_CURRENT_SOURCE_DIR}/src/enet/include)
 
 set(SOURCE
-  src/glew.c
   src/main.cpp
   src/gfx.cpp
+  src/gfxe.cpp
   src/tcl.cpp
   src/tcl_expr.cpp
   src/world.cpp
   src/player.cpp
+  src/input.cpp
 
+  src/glew.c
   src/enet/callbacks.c
   src/enet/host.c
   src/enet/list.c

@@ -17,6 +17,7 @@ namespace gfx
       Texture        = 1 << 1,
       VertexColor    = 1 << 2,
       Lighting       = 1 << 3,
+      TintColor      = 1 << 4,
       Proj2D         = 1 << 10,
       Proj3D         = 1 << 11
     };
@@ -82,7 +83,9 @@ namespace gfx
   void setCamera(float eyeX, float eyeY, float eyeZ, float atX, float atY, float atZ);
 
   void setTransform(const float * transform);
-  void setTransform(float x, float y, float z, float yaw, float pitch, float roll);
+  void setTransform(float x, float y, float z, float rotX, float rotY, float rotZ, float scaleX = 1, float scaleY = 1, float scaleZ = 1);
+
+  void setTintColor(float r, float g, float b);
 
   void begin(uint32_t features);
   void end();
