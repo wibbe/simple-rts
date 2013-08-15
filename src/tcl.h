@@ -29,6 +29,7 @@ namespace tcl {
   bool bind(const char * name, FuncT func);
 
   ReturnCode evaluate(std::string const& code);
+  ReturnCode exec(const char * filename);
 
   // -- Internal functions --
 

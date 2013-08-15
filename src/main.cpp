@@ -33,9 +33,9 @@ PROC("criticalError", criticalError);
 void mainLoop();
 
 #if defined(WIN32) || defined(_WINDOWS)
-int SDL_main(int argc, char * argv[])
+  int SDL_main(int argc, char * argv[])
 #else
-int main(int argc, char * argv[])
+  int main(int argc, char * argv[])
 #endif
 {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
@@ -74,8 +74,7 @@ int main(int argc, char * argv[])
   gfx::init(1280, 720);
   gfxe::init();
 
-  tcl::evaluate("input::bind ESCAPE quit");
-  tcl::evaluate("input::bind2 MOUSE_LEFT {puts DOWN([input::mouseX]x[input::mouseY])} {puts UP}");
+  tcl::exec("data/default.tcl");
 
   // Make sure we are always running on the same core, otherwise we can get timing issues
   #if defined(WIN32) || defined(_WINDOWS)

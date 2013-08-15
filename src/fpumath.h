@@ -9,6 +9,7 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <cmath>
 #include <string.h>
 
 namespace math
@@ -32,6 +33,12 @@ namespace math
   inline float fsign(float _a)
   {
     return _a < 0.0f ? -1.0f : 1.0f;
+  }
+
+  inline float frad(float deg)
+  {
+    const float DEG2RAD = M_PI / 180.0f;
+    return deg * DEG2RAD;
   }
 
   inline void vec3Add(float* __restrict _result, const float* __restrict _a, const float* __restrict _b)

@@ -44,6 +44,7 @@ set(SOURCE
   src/world.cpp
   src/player.cpp
   src/input.cpp
+  src/util.cpp
 
   src/glew.c
   src/enet/callbacks.c

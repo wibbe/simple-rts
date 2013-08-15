@@ -19,7 +19,8 @@ namespace player
     Player();
 
     float startX, startZ;
-    float cameraX, cameraZ;
+    float cameraX, cameraZ, cameraDir;
+    float cameraMoveForward, cameraMoveSideways;
 
     float spawnRate;
     float timeToNextSpawn;

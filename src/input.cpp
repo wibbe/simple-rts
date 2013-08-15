@@ -74,9 +74,9 @@ namespace input
     _inputCommands[key] = cmd;
   }
 
-  PROC("input::bind", bind);
-  PROC("input::bind2", bind2);
-  PROC("input::mouseX", mouseX);
-  PROC("input::mouseY", mouseY);
+  PROC("input:bind", bind);
+  PROC("input:bind2", bind2);
+  PROC("input:mouseX", mouseX);
+  PROC("input:mouseY", mouseY);
 
 }

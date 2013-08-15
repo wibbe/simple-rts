@@ -124,6 +124,6 @@ namespace world
   }
 
   // Tcl Bindings
-  PROC("world::clear", clear)
-  PROC("world::createEmpty", createEmpty)
+  PROC("world:clear", clear)
+  PROC("world:createEmpty", createEmpty)
 }

@@ -3,6 +3,7 @@
 #include "world.h"
 #include "tcl.h"
 #include "gfxe.h"
+#include "fpumath.h"
 
 #include <vector>
 #include <memory.h>
@@ -14,6 +15,7 @@ namespace player
   namespace {
     PlayerVector _allPlayers;
     Player * _human;
+    float _cameraMoveSpeed = 20.0f;
   }
 
   // -- Player --
@@ -23,6 +25,9 @@ namespace player
       startZ(0),
       cameraX(0),
       cameraZ(0),
+      cameraDir(30),
+      cameraMoveForward(0),
+      cameraMoveSideways(0),
       spawnRate(10.0),
       timeToNextSpawn(10.0),
       name("noname"),
@@ -75,11 +80,26 @@ namespace player
         player->timeToNextSpawn = player->spawnRate;
       }
     }
+
+    { // Update player camera
+      Player & player = player::player();
+      const float forwardX = -std::cos(math::frad(player.cameraDir));
+      const float forwardZ = -std::sin(math::frad(player.cameraDir));
+
+      const float sidewaysX = std::cos(math::frad(player.cameraDir + 90));
+      const float sidewaysZ = std::sin(math::frad(player.cameraDir + 90));
+
+      player.cameraX += (forwardX * player.cameraMoveForward + sidewaysX * player.cameraMoveSideways) * _cameraMoveSpeed * dt;
+      player.cameraZ += (forwardZ * player.cameraMoveForward + sidewaysZ * player.cameraMoveSideways) * _cameraMoveSpeed * dt;
+    }
   }
 
   void setCamera()
   {
-    gfx::setCamera(player().cameraX + 10, 15, player().cameraZ + 10, player().cameraX, 0, player().cameraZ);
+    const float dirX = std::cos(math::frad(player().cameraDir));
+    const float dirZ = std::sin(math::frad(player().cameraDir));
+
+    gfx::setCamera(player().cameraX + dirX * 10.0f, 15, player().cameraZ + dirZ * 10.0f, player().cameraX, 0, player().cameraZ);
   }
 
   void render()
@@ -108,6 +128,24 @@ namespace player
 
   // -- Tcl Bindings --
 
-  PROC("player::setName", setName)
+  static void setCameraSpeed(float speed)
+  {
+    _cameraMoveSpeed = speed;
+  }
+
+  static void panForward(int32_t dir)
+  {
+    player().cameraMoveForward = dir;
+  }
+
+  static void panSideways(int32_t dir)
+  {
+    player().cameraMoveSideways = dir;
+  }
+
+  PROC("player:setName", setName);
+  PROC("player:cameraSpeed", setCameraSpeed);
+  PROC("player:panForward", panForward);
+  PROC("player:panSideways", panSideways);
 
 }

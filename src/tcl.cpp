@@ -1,6 +1,7 @@
 
 #include "config.h"
 #include "tcl.h"
+#include "util.h"
 
 #include <iostream>
 #include <map>
@@ -531,6 +532,12 @@ namespace tcl {
     }
 
     return RET_OK;
+  }
+
+  ReturnCode exec(const char * filename)
+  {
+    std::string code = util::loadFileStr(filename);
+    return evaluate(code);
   }
 
   bool _registerProc(const char * name, Procedure * function)
