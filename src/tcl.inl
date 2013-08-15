@@ -151,6 +151,47 @@ namespace tcl {
 
       FuncT _function;
     };
+
+    template <typename FuncT, typename P1, typename P2, typename P3, typename P4>
+    struct CProcedure<4, FuncT, void, TYPELIST_4(P1, P2, P3, P4)> : public Procedure
+    {
+      CProcedure(FuncT function) : _function(function) { }
+
+      ReturnCode call(std::vector<std::string> const& args)
+      {
+        if (args.size() != 5)
+          return _arityError(args[0]);
+
+        _function(meta::String<P1>::from(args[1]),
+                  meta::String<P2>::from(args[2]),
+                  meta::String<P3>::from(args[3]),
+                  meta::String<P4>::from(args[4]));
+        return RET_OK;
+      }
+
+      FuncT _function;
+    };
+
+    template <typename FuncT, typename ReturnT, typename P1, typename P2, typename P3, typename P4>
+    struct CProcedure<4, FuncT, ReturnT, TYPELIST_4(P1, P2, P3, P4)> : public Procedure
+    {
+      CProcedure(FuncT function) : _function(function) { }
+
+      ReturnCode call(std::vector<std::string> const& args)
+      {
+        if (args.size() != 5)
+          return _arityError(args[0]);
+
+        ReturnT ret = _function(meta::String<P1>::from(args[1]),
+                                meta::String<P2>::from(args[2]),
+                                meta::String<P3>::from(args[3]),
+                                meta::String<P4>::from(args[4]));
+        tcl::_return(meta::String<ReturnT>::to(ret));
+        return RET_OK;
+      }
+
+      FuncT _function;
+    };
   }
 
   template <typename FuncT>

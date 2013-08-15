@@ -17,6 +17,7 @@ namespace tcl {
 
   struct Procedure
   {
+    virtual ~Procedure() { }
     virtual ReturnCode call(std::vector<std::string> const& args) = 0;
   };
 
@@ -37,7 +38,7 @@ namespace tcl {
   void _return(std::string const& value);
 }
 
-/// Used to register function to the tcl interpreter
+/// Used to register functions to the tcl interpreter
 #define PROC(name, fun) namespace { static bool __dummy##fun = tcl::bind(name, fun); }
 
 #include "tcl.inl"

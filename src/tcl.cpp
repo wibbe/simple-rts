@@ -413,9 +413,25 @@ namespace tcl {
     reset();
   }
 
+  static void clearProcedures()
+  {
+
+  }
+
   void shutdown()
   {
+    for (ProcedureMap::iterator it = _procedures.begin(); it != _procedures.end(); ++it)
+      delete it->second;
+
     _procedures.clear();
+
+    ProcReg * it = _procRegHead;
+    while (it)
+    {
+      ProcReg * proc = it;
+      it = it->next;
+      delete proc;
+    }
   }
 
   void reset()
