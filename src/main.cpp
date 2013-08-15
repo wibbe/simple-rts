@@ -8,6 +8,7 @@
 #include "world.h"
 #include "player.h"
 #include "input.h"
+#include "platform.h"
 
 #include <stdio.h>
 
@@ -20,13 +21,9 @@ static void quit()
   _running = false;
 }
 
-static void criticalError(const char *title, const char * text)
+static void criticalError(const char * title, const char * text)
 {
-#if defined(WIN32) || defined(_WINDOWS)
-  MessageBoxA(0, text, title, MB_OK | MB_SETFOREGROUND | MB_ICONSTOP);
-#else
-  fprintf(stderr, "%s - %s", title, text);
-#endif
+  platform::messageBox(title, text);
   exit(1);
 }
 
@@ -77,8 +74,8 @@ int main(int argc, char * argv[])
   gfx::init(1280, 720);
   gfxe::init();
 
-  tcl::evaluate("input::bind ESCAPE {quit}");
-  tcl::evaluate("input::bind2 MOUSE_LEFT {puts DOWN( [input::mouseX] x [input::mouseY] )} {puts UP}");
+  tcl::evaluate("input::bind ESCAPE quit");
+  tcl::evaluate("input::bind2 MOUSE_LEFT {puts DOWN([input::mouseX]x[input::mouseY])} {puts UP}");
 
   // Make sure we are always running on the same core, otherwise we can get timing issues
   #if defined(WIN32) || defined(_WINDOWS)
@@ -163,6 +160,8 @@ void mainLoop()
       dt = 1.0f / 60.0f;
 
     SDL_GL_SwapWindow(_window);
+
+    player::tick(dt);
 
     while (SDL_PollEvent(&event))
     {

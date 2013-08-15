@@ -21,6 +21,9 @@ namespace player
     float startX, startZ;
     float cameraX, cameraZ;
 
+    float spawnRate;
+    float timeToNextSpawn;
+
     std::string name;
 
     Unit units[MAX_UNITS];

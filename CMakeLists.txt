@@ -58,12 +58,12 @@ set(SOURCE
 # Platform specific source
 if (UNIX)
   if (APPLE)
-    set(SOURCE ${SOURCE} src/enet/unix.c)
+    set(SOURCE ${SOURCE} src/platform_mac.mm src/enet/unix.c)
   else()
-    set(SOURCE ${SOURCE} src/enet/unix.c)
+    set(SOURCE ${SOURCE} src/platform_unix.cpp src/enet/unix.c)
   endif()
 else()
-  set(SOURCE ${SOURCE} src/enet/win32.c)
+  set(SOURCE ${SOURCE} src/platform_win32.cpp src/enet/win32.c)
 endif()
 
 # Build and link app

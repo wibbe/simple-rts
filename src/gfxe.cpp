@@ -12,14 +12,14 @@ namespace gfxe
   gfx::VertexDecl PosColorVertexDecl;
 
   static PosColorVertex cubeVertices[8] = {
-    {-1.0f, 1.0f, 1.0f, 0xffffffff },
-    { 1.0f, 1.0f, 1.0f, 0xffffffff },
-    {-1.0f, -1.0f, 1.0f, 0xffffffff },
-    { 1.0f, -1.0f, 1.0f, 0xffffffff },
-    {-1.0f, 1.0f, -1.0f, 0xffffffff },
-    { 1.0f, 1.0f, -1.0f, 0xffffffff },
-    {-1.0f, -1.0f, -1.0f, 0xffffffff },
-    { 1.0f, -1.0f, -1.0f, 0xffffffff },
+    {-0.5f, 0.5f, 0.5f, 0xffffffff },
+    { 0.5f, 0.5f, 0.5f, 0xffffffff },
+    {-0.5f, -0.5f, 0.5f, 0xffffffff },
+    { 0.5f, -0.5f, 0.5f, 0xffffffff },
+    {-0.5f, 0.5f, -0.5f, 0xffffffff },
+    { 0.5f, 0.5f, -0.5f, 0xffffffff },
+    {-0.5f, -0.5f, -0.5f, 0xffffffff },
+    { 0.5f, -0.5f, -0.5f, 0xffffffff },
   };
 
   static const uint16_t cubeIndices[36] = {

@@ -23,7 +23,9 @@ namespace player
       startZ(0),
       cameraX(0),
       cameraZ(0),
-      name(""),
+      spawnRate(10.0),
+      timeToNextSpawn(10.0),
+      name("noname"),
       unitCount(0)
   {
     memset(units, 0, sizeof(Unit) * MAX_UNITS);
@@ -55,38 +57,53 @@ namespace player
     return *_human;
   };
 
+  static void spawnUnit(Player * player)
+  {
+    printf("Spawning for player '%s'\n", player->name.c_str());
+  }
+
   void tick(double dt)
   {
+    for (PlayerVector::iterator it = _allPlayers.begin(), end = _allPlayers.end(); it != end; ++it)
+    {
+      Player * player = *it;
 
+      player->timeToNextSpawn -= dt;
+      if (player->timeToNextSpawn < 0.0f)
+      {
+        spawnUnit(player);
+        player->timeToNextSpawn = player->spawnRate;
+      }
+    }
   }
 
   void setCamera()
   {
-    gfx::setCamera(player().cameraX + 15, 30, player().cameraZ + 15, player().cameraX, 0, player().cameraZ);
+    gfx::setCamera(player().cameraX + 10, 15, player().cameraZ + 10, player().cameraX, 0, player().cameraZ);
   }
 
   void render()
   {
+    gfxe::beginCube();
+
     for (PlayerVector::const_iterator it = _allPlayers.begin(), end = _allPlayers.end(); it != end; ++it)
     {
       Player * player = *it;
 
       const float startY = world::getHeight(player->startX, player->startZ);
 
-      gfxe::beginCube();
-
       // Draw spawn point
       gfx::setTintColor(1, 0, 0);
-
-      gfx::setTransform(player->startX, startY + 0.5, player->startZ, 0, 0, 0, 1.5, 1, 1.5);
-      gfxe::drawCube();
+      gfx::setTransform(player->startX, startY + 0.25, player->startZ, 0, 0, 0, 1.5, 1, 1.5);
+      gfxe::drawCube(); // Walls
 
       gfx::setTintColor(0.1, 0.1, 0.1);
-      gfx::setTransform(player->startX, startY + 1.5, player->startZ, 45, 0, 0, 1.45, 1.1, 1.1);
-      gfxe::drawCube();
+      gfx::setTransform(player->startX, startY + 0.75, player->startZ, 45, 0, 0, 1.45, 1.1, 1.1);
+      gfxe::drawCube(); // Roof
 
-      gfxe::endCube();
     }
+
+    gfxe::endCube();
   }
 
   // -- Tcl Bindings --
