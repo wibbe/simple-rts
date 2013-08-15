@@ -43,6 +43,7 @@ set(SOURCE
   src/tcl_expr.cpp
   src/world.cpp
   src/player.cpp
+  src/unit.cpp
   src/input.cpp
   src/util.cpp
 
