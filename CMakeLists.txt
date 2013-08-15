@@ -42,6 +42,7 @@ set(SOURCE
   src/glew.c
   src/main.cpp
   src/gfx.cpp
+  src/tcl.cpp
   src/world.cpp
   src/player.cpp
 

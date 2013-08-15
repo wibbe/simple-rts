@@ -1,6 +1,7 @@
 
 #include "config.h"
 #include "gfx.h"
+#include "tcl.h"
 #include "world.h"
 
 #include <stdio.h>
@@ -30,7 +31,7 @@ namespace world
     uint32_t color;
   };
 
-  void clear_world()
+  void clear()
   {
     delete[] _cells;
     _cells = NULL;
@@ -41,7 +42,7 @@ namespace world
       gfx::destroyIndexBuffer(_terrainIB);
   }
 
-  static void init_gfx()
+  static void initGfx()
   {
     static bool initialized = false;
 
@@ -72,9 +73,9 @@ namespace world
     _terrainVB = gfx::createDynamicVertexBuffer(mem, _terrainDecl);
   }
 
-  void create_empty(uint32_t width, uint32_t height)
+  void createEmpty(uint32_t width, uint32_t height)
   {
-    clear_world();
+    clear();
 
     _width = width;
     _height = height;
@@ -82,7 +83,12 @@ namespace world
     _cells = new uint16_t[_width * _height];
     memset(_cells, 0, sizeof(uint16_t) * width * height);
 
-    init_gfx();
+    initGfx();
+  }
+
+  float getHeight(float x, float y)
+  {
+    return 0.0f;
   }
 
   void render()
@@ -91,4 +97,9 @@ namespace world
 
     gfx::end();
   }
+
+
+  // Tcl Bindings
+  PROC("world::clear", clear)
+  PROC("world::createEmpty", createEmpty)
 }

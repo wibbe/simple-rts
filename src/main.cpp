@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "gfx.h"
+#include "tcl.h"
 #include "world.h"
 
 #include <stdio.h>
@@ -85,6 +86,8 @@ int main(int argc, char * argv[])
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 
+  tcl::init();
+
   _window = SDL_CreateWindow("Simple RTS",
                              SDL_WINDOWPOS_CENTERED,
                              SDL_WINDOWPOS_CENTERED,
@@ -126,7 +129,7 @@ int main(int argc, char * argv[])
   gfx::setProjection(50, 1.0, 1000.0);
   gfx::setCamera(0, 0, -15, 0, 0, 0);
 
-  world::create_empty(10, 10);
+  world::createEmpty(10, 10);
 
   mainLoop();
 
@@ -134,6 +137,7 @@ int main(int argc, char * argv[])
   gfx::destroyIndexBuffer(cubeIB);
 
   gfx::shutdown();
+  tcl::shutdown();
 
   SDL_GL_DeleteContext(_context);
   SDL_DestroyWindow(_window);
