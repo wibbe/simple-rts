@@ -46,6 +46,8 @@ set(SOURCE
   src/unit.cpp
   src/input.cpp
   src/util.cpp
+  src/collide.cpp
+  src/vmath.cpp
 
   src/glew.c
   src/enet/callbacks.c
